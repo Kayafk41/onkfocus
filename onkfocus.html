@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>onkfocus — Odaklanma & Görev İstasyonu</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        appleBg: '#F5F5F7',
+                        appleCard: '#FFFFFF',
+                        appleBlue: '#007AFF',
+                        appleDarkBlue: '#0A84FF',
+                        appleGreen: '#34C759',
+                        appleIndigo: '#5856D6',
+                        appleOrange: '#FF9500',
+                        appleRed: '#FF3B30',
+                        appleText: '#1D1D1F',
+                        appleSecondary: '#86868B',
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Sistem Estetiği & Tipografi */
+        body {
+            background-color: #F5F5F7;
+            color: #1D1D1F;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+        html.dark body {
+            background-color: #000000;
+            color: #F5F5F7;
+        }
+
+        /* Rakamların sayaç akarken titrememesi için tabular-nums */
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Doğal Saç Teli Kenarlık & İnce Derinlik */
+        .apple-surface {
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+        html.dark .apple-surface {
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+        .apple-shadow-sm {
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #E5E5EA;
+            height: 4px;
+            border-radius: 999px;
+            outline: none;
+        }
+        html.dark input[type="range"] {
+            background: #3A3A3C;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25), 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+            transition: transform 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.08);
+        }
+
+        /* Minimalist Kaydırma Çubuğu */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D1D1D6;
+            border-radius: 999px;
+        }
+        html.dark ::-webkit-scrollbar-thumb {
+            background: #3A3A3C;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #AEAEB2;
+        }
+
+        /* Ses Ekolayzır Çubuk Animasyonu */
+        @keyframes eqPulse {
+            0%, 100% { height: 25%; }
+            50% { height: 95%; }
+        }
+        .eq-bar-active {
+            animation: eqPulse 0.85s ease-in-out infinite;
+        }
+
+        /* Mobil Safari input odaklanınca otomatik zoom yapmasını engelle & dokunma iyileştirmeleri */
+        @media (max-width: 1023px) {
+            input[type="text"],
+            input[type="number"],
+            select {
+                font-size: 16px !important;
+            }
+            button, select, input {
+                touch-action: manipulation;
+            }
+        }
+        .pb-safe {
+            padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between font-sans selection:bg-appleBlue/15 selection:text-appleBlue pb-20 lg:pb-0">
+
+    <!-- ÜST MENÜ ÇUBUĞU -->
+    <header class="sticky top-0 z-40 bg-white/80 dark:bg-[#1C1C1E]/85 backdrop-blur-xl border-b border-black/[0.08] dark:border-white/[0.08] transition-colors">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 h-12 flex items-center justify-between">
+            <!-- Uygulama Kimliği -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg bg-[#007AFF] flex items-center justify-center text-white">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2" />
+                    </svg>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <h1 class="font-semibold text-[15px] tracking-tight text-appleText dark:text-white">
+                        onkfocus
+                    </h1>
+                    <span class="text-xs text-appleSecondary dark:text-[#98989D] hidden sm:inline">Odaklanma & Görevler</span>
+                </div>
+            </div>
+
+            <!-- Sağ Durum & Tema Değiştirici Alanı -->
+            <div class="flex items-center gap-2.5 text-xs">
+                <!-- Tema Değiştirici (Kayan Segmented Switch) -->
+                <button onclick="toggleTheme()" id="theme-toggle-btn" title="Açık / Karanlık Mod"
+                    class="relative w-14 h-7 rounded-full bg-[#E5E5EA] dark:bg-[#2C2C2E] border border-black/[0.06] dark:border-white/[0.08] p-0.5 flex items-center justify-between transition-colors duration-300 cursor-pointer">
+                    <span id="theme-switch-thumb"
+                        class="w-6 h-6 rounded-full bg-white dark:bg-[#48484A] apple-shadow-sm transform translate-x-0 transition-transform duration-300 ease-out"></span>
+                    <span class="absolute inset-0 flex items-center justify-between px-1.5 text-[11px] pointer-events-none select-none">
+                        <span id="theme-sun-icon" class="transition-opacity duration-200 opacity-100">☀️</span>
+                        <span id="theme-moon-icon" class="transition-opacity duration-200 opacity-45">🌙</span>
+                    </span>
+                </button>
+
+                <div class="px-2.5 py-1 rounded-md border border-black/[0.06] dark:border-white/[0.08] text-appleText dark:text-white font-medium tabular-nums">
+                    <span id="live-clock">--:--</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ANA İÇERİK IZGARASI -->
+    <main class="max-w-5xl w-full mx-auto px-3.5 sm:px-6 py-4 sm:py-7 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+        
+        <!-- SOL KOLON: ODAK SAYACI & AMBIYANS SESLERİ (7 Sütun) -->
+        <section class="lg:col-span-7 flex flex-col gap-4 sm:gap-5">
+            
+            <!-- SAYAÇ KARTI -->
+            <div id="mobile-view-timer" class="bg-white dark:bg-[#1C1C1E] rounded-xl p-4 sm:p-7 apple-surface border border-black/[0.08] dark:border-white/[0.08] flex flex-col items-center transition-colors">
+                
+                <!-- Mod Seçici: Odak & Mola -->
+                <div class="bg-[#EEEEF0] dark:bg-[#2C2C2E] p-0.5 rounded-lg flex items-center gap-0.5 mb-5 sm:mb-6 w-full max-w-sm border border-black/[0.04] dark:border-white/[0.04] transition-colors">
+                    <button onclick="switchMode('focus')" id="tab-focus" class="mode-tab flex-1 py-2 sm:py-1.5 px-3 rounded-md text-xs font-semibold bg-white dark:bg-[#3A3A3C] text-appleText dark:text-white apple-shadow-sm transition-all cursor-pointer">
+                        Odak · <span id="tab-focus-val">25</span>d
+                    </button>
+                    <button onclick="switchMode('short')" id="tab-short" class="mode-tab flex-1 py-2 sm:py-1.5 px-3 rounded-md text-xs font-medium text-appleSecondary dark:text-[#98989D] hover:text-appleText dark:hover:text-white transition-all cursor-pointer">
+                        Mola · <span id="tab-short-val">5</span>d
+                    </button>
+                </div>
+
+                <!-- Dairesel İlerleme Halkası -->
+                <div class="relative w-52 h-52 sm:w-64 sm:h-64 flex items-center justify-center">
+                    <svg class="w-full h-full -rotate-90" viewBox="0 0 256 256">
+                        <circle id="progress-track" cx="128" cy="128" r="112" stroke="#E5E5EA" stroke-width="7" fill="none" />
+                        <circle id="progress-ring" cx="128" cy="128" r="112" stroke="#007AFF" stroke-width="7" fill="none"
+                            stroke-linecap="round"
+                            stroke-dasharray="703.716"
+                            stroke-dashoffset="0"
+                            class="transition-all duration-300 ease-out" />
+                    </svg>
+
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+                        <span id="mode-badge" class="text-[11px] font-semibold tracking-wide text-appleBlue mb-1">
+                            Odak Oturumu
+                        </span>
+                        <div id="timer-display" class="font-light tracking-tight text-appleText dark:text-white tabular-nums leading-none" style="font-size: 48px;">
+                            25:00
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HAZIR SINAV & SÜRE ÖN AYARLARI (TYT / AYT / 1 SAAT + ÖZEL MODLAR) -->
+                <div class="w-full max-w-lg mt-4 sm:mt-5 mb-2.5 flex flex-col gap-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <span class="text-[11px] font-medium text-appleSecondary dark:text-[#98989D]">Hazır modlar:</span>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <button type="button" onclick="applyPreset('tyt', 165, 15, 'TYT Deneme')" id="preset-tyt"
+                                class="preset-btn px-2.5 py-1.5 sm:py-1 rounded-md text-xs font-medium bg-[#EEEEF0] dark:bg-[#2C2C2E] hover:bg-appleBlue/10 dark:hover:bg-appleDarkBlue/15 text-appleText dark:text-white hover:text-appleBlue dark:hover:text-appleDarkBlue border border-black/[0.05] dark:border-white/[0.06] transition cursor-pointer">
+                                TYT · 2 sa 45 dk
+                            </button>
+                            <button type="button" onclick="applyPreset('ayt', 180, 15, 'AYT Deneme')" id="preset-ayt"
+                                class="preset-btn px-2.5 py-1.5 sm:py-1 rounded-md text-xs font-medium bg-[#EEEEF0] dark:bg-[#2C2C2E] hover:bg-appleBlue/10 dark:hover:bg-appleDarkBlue/15 text-appleText dark:text-white hover:text-appleBlue dark:hover:text-appleDarkBlue border border-black/[0.05] dark:border-white/[0.06] transition cursor-pointer">
+                                AYT · 3 sa
+                            </button>
+                            <button type="button" onclick="applyPreset('hour', 60, 10, '1 Saat Etüt')" id="preset-hour"
+                                class="preset-btn px-2.5 py-1.5 sm:py-1 rounded-md text-xs font-medium bg-[#EEEEF0] dark:bg-[#2C2C2E] hover:bg-appleBlue/10 dark:hover:bg-appleDarkBlue/15 text-appleText dark:text-white hover:text-appleBlue dark:hover:text-appleDarkBlue border border-black/[0.05] dark:border-white/[0.06] transition cursor-pointer">
+                                1 sa
+                            </button>
+                            <!-- Kullanıcının Oluşturduğu Özel Modlar -->
+                            <div id="custom-presets-container" class="flex items-center gap-1.5 flex-wrap"></div>
+                            <!-- Yeni Mod Ekleme (+) Butonu -->
+                            <button type="button" onclick="toggleCustomPresetForm()" id="btn-open-custom-preset" title="Kendi Hazır Modunu Oluştur"
+                                class="w-7 h-7 sm:w-6 sm:h-6 rounded-md text-sm font-semibold bg-[#EEEEF0] dark:bg-[#2C2C2E] hover:bg-appleBlue/15 dark:hover:bg-appleDarkBlue/20 text-appleBlue dark:text-appleDarkBlue border border-black/[0.06] dark:border-white/[0.08] flex items-center justify-center transition cursor-pointer">
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Özel Mod Oluşturma Çekmecesi -->
+                    <form id="custom-preset-form" onsubmit="saveCustomPreset(event)" class="hidden bg-[#F9F9FB] dark:bg-[#252528] border border-black/[0.08] dark:border-white/[0.08] rounded-lg p-2.5 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-semibold text-appleText dark:text-white">Yeni Hazır Mod Oluştur</span>
+                            <button type="button" onclick="toggleCustomPresetForm()" class="text-[11px] text-appleSecondary hover:text-appleText dark:hover:text-white cursor-pointer">Vazgeç</button>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-12 gap-1.5">
+                            <input type="text" id="custom-preset-name" placeholder="Mod adı (ör. YDT)" maxlength="20" required
+                                class="col-span-2 sm:col-span-5 bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] focus:border-appleBlue dark:focus:border-appleDarkBlue rounded-md px-2.5 py-1.5 sm:py-1 text-xs text-appleText dark:text-white placeholder-appleSecondary/70 outline-none">
+                            <input type="number" id="custom-preset-focus" placeholder="Odak (dk)" min="1" max="600" required
+                                class="col-span-1 sm:col-span-2 bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] focus:border-appleBlue dark:focus:border-appleDarkBlue rounded-md px-2 py-1.5 sm:py-1 text-xs text-center text-appleText dark:text-white tabular-nums outline-none" title="Odak Süresi (Maks 600 dk / 10 sa)">
+                            <input type="number" id="custom-preset-short" placeholder="Mola" min="1" max="90"
+                                class="col-span-1 sm:col-span-2 bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] focus:border-appleBlue dark:focus:border-appleDarkBlue rounded-md px-2 py-1.5 sm:py-1 text-xs text-center text-appleText dark:text-white tabular-nums outline-none" title="Mola Süresi (Boş bırakılırsa otomatik)">
+                            <button type="submit"
+                                class="col-span-2 sm:col-span-3 py-1.5 sm:py-1 px-2.5 rounded-md bg-appleBlue dark:bg-appleDarkBlue hover:bg-[#0066D6] text-white font-semibold text-xs transition cursor-pointer">
+                                Kaydet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- SÜRE AYARLARI (ODAK & TEK MOLA) -->
+                <div class="w-full max-w-lg mb-3.5 bg-[#F9F9FB] dark:bg-[#252528] border border-black/[0.06] dark:border-white/[0.06] rounded-lg p-2.5 sm:p-3 transition-colors">
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <!-- Odak Süresi -->
+                        <div class="bg-white dark:bg-[#1C1C1E] rounded-md p-2 border border-black/[0.07] dark:border-white/[0.08] flex flex-col items-center">
+                            <label for="input-focus" class="text-[11px] font-medium text-appleSecondary dark:text-[#98989D] mb-0.5">Odak (dk)</label>
+                            <input type="number" id="input-focus" min="1" max="600" value="25" oninput="onFocusInputChange(this.value)"
+                                class="w-full text-center text-[15px] font-semibold text-appleText dark:text-white tabular-nums bg-transparent outline-none focus:text-appleBlue dark:focus:text-appleDarkBlue transition">
+                        </div>
+
+                        <!-- Mola Süresi -->
+                        <div class="bg-white dark:bg-[#1C1C1E] rounded-md p-2 border border-black/[0.07] dark:border-white/[0.08] flex flex-col items-center">
+                            <label for="input-short" class="text-[11px] font-medium text-appleSecondary dark:text-[#98989D] mb-0.5">Mola (dk)</label>
+                            <input type="number" id="input-short" min="1" max="90" value="5" oninput="onBreakInputChange(this.value)"
+                                class="w-full text-center text-[15px] font-semibold text-appleText dark:text-white tabular-nums bg-transparent outline-none focus:text-appleGreen transition">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sabitlenen Aktif Hedef Şeridi -->
+                <div class="w-full max-w-lg mb-4 sm:mb-5 bg-[#F9F9FB] dark:bg-[#252528] border border-black/[0.06] dark:border-white/[0.06] rounded-lg px-3.5 py-2.5 flex items-center justify-between gap-3 transition-colors">
+                    <div class="flex items-center gap-2.5 overflow-hidden">
+                        <span class="w-2 h-2 rounded-full bg-appleOrange shrink-0"></span>
+                        <p id="pinned-task-text" class="text-xs sm:text-[13px] text-appleSecondary dark:text-[#98989D] truncate">
+                            Odaklanılacak görev seçilmedi
+                        </p>
+                    </div>
+                    <button onclick="clearPinnedTask()" id="unpin-btn" class="hidden text-appleSecondary dark:text-[#98989D] hover:text-appleText dark:hover:text-white text-xs font-medium shrink-0 cursor-pointer" title="Sabitlemeyi Kaldır">
+                        Kaldır
+                    </button>
+                </div>
+
+                <!-- Ana Kontrol Butonları -->
+                <div class="flex items-center justify-center gap-2.5 w-full max-w-sm">
+                    <button onclick="startTimer()" id="btn-start" class="flex-1 py-3 sm:py-2.5 px-5 rounded-lg bg-appleBlue dark:bg-appleDarkBlue hover:bg-[#0066D6] text-white font-semibold text-sm active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+                        Başlat
+                    </button>
+
+                    <button onclick="pauseTimer()" id="btn-pause" class="hidden flex-1 py-3 sm:py-2.5 px-5 rounded-lg bg-appleOrange hover:bg-[#E68600] text-white font-semibold text-sm active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M5.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75A.75.75 0 007.25 3h-1.5zM12.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75a.75.75 0 00-.75-.75h-1.5z"/></svg>
+                        Duraklat
+                    </button>
+
+                    <button onclick="resetTimer()" class="py-3 sm:py-2.5 px-4 rounded-lg bg-[#EEEEF0] dark:bg-[#2C2C2E] hover:bg-[#E2E2E6] dark:hover:bg-[#3A3A3C] border border-black/[0.05] dark:border-white/[0.06] text-appleText dark:text-white font-medium text-sm active:scale-[0.99] transition-all cursor-pointer">
+                        Sıfırla
+                    </button>
+                </div>
+
+                <!-- Özet İstatistikler -->
+                <div class="w-full grid grid-cols-2 gap-3 mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-black/[0.06] dark:border-white/[0.08]">
+                    <div class="bg-[#F9F9FB] dark:bg-[#252528] border border-black/[0.05] dark:border-white/[0.05] rounded-lg p-3 flex flex-col items-center">
+                        <span class="text-[11px] text-appleSecondary dark:text-[#98989D]">Tamamlanan Oturum</span>
+                        <span id="session-count" class="text-xl font-semibold text-appleText dark:text-white tabular-nums mt-0.5">0</span>
+                    </div>
+                    <div class="bg-[#F9F9FB] dark:bg-[#252528] border border-black/[0.05] dark:border-white/[0.05] rounded-lg p-3 flex flex-col items-center">
+                        <span class="text-[11px] text-appleSecondary dark:text-[#98989D]">Toplam Odak Süresi</span>
+                        <span id="total-minutes-display" class="text-xl font-semibold text-appleText dark:text-white tabular-nums mt-0.5">0 dk</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ALT MODÜL: ARKA PLAN SESLERİ -->
+            <div id="mobile-view-ambient" class="bg-white dark:bg-[#1C1C1E] rounded-xl p-4 sm:p-5 apple-surface border border-black/[0.08] dark:border-white/[0.08] transition-colors">
+                <div class="flex items-center justify-between gap-3 mb-3.5">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-appleIndigo/10 dark:bg-appleIndigo/20 flex items-center justify-center text-appleIndigo">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+                        </div>
+                        <div>
+                            <h2 class="font-semibold text-[15px] text-appleText dark:text-white leading-tight">Arka Plan Sesleri</h2>
+                            <p class="text-[11px] text-appleSecondary dark:text-[#98989D]">Odaklanmayı destekleyen ortam sesleri</p>
+                        </div>
+                    </div>
+
+                    <!-- Ekolayzır & Ana Ses Anahtarı -->
+                    <div class="flex items-center gap-2.5">
+                        <div id="visualizer" class="flex items-end gap-1 h-4 px-1">
+                            <span class="w-0.5 bg-appleBlue dark:bg-appleDarkBlue rounded-full h-1.5 transition-all"></span>
+                            <span class="w-0.5 bg-appleBlue dark:bg-appleDarkBlue rounded-full h-2.5 transition-all"></span>
+                            <span class="w-0.5 bg-appleBlue dark:bg-appleDarkBlue rounded-full h-1.5 transition-all"></span>
+                            <span class="w-0.5 bg-appleBlue dark:bg-appleDarkBlue rounded-full h-3 transition-all"></span>
+                        </div>
+                        <button onclick="toggleMasterMute()" id="master-mute-btn" class="px-2.5 py-1 rounded-md bg-[#EEEEF0] dark:bg-[#2C2C2E] hover:bg-[#E2E2E6] dark:hover:bg-[#3A3A3C] border border-black/[0.05] dark:border-white/[0.06] text-xs font-medium text-appleText dark:text-white flex items-center gap-1.5 transition cursor-pointer">
+                            <span id="mute-icon">🔊</span>
+                            <span id="mute-text">Açık</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Ses Kanalları -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <!-- Kanal 1: Yağmur -->
+                    <div class="bg-[#F9F9FB] dark:bg-[#252528] border border-black/[0.06] dark:border-white/[0.06] rounded-lg p-3 flex flex-col justify-between gap-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-appleText dark:text-white flex items-center gap-1.5">
+                                🌧️ Yağmur
+                            </span>
+                            <button onclick="toggleSound('rain')" id="toggle-rain" class="w-10 h-5 rounded-full bg-[#E5E5EA] dark:bg-[#3A3A3C] p-0.5 relative transition-colors duration-200 cursor-pointer">
+                                <span id="knob-rain" class="block w-4 h-4 rounded-full bg-white shadow-sm transform translate-x-0 transition-transform duration-200"></span>
+                            </button>
+                        </div>
+                        <input type="range" min="0" max="1" step="0.01" value="0.5" oninput="setChannelVolume('rain', this.value)" class="w-full">
+                    </div>
+
+                    <!-- Kanal 2: Beyaz Gürültü -->
+                    <div class="bg-[#F9F9FB] dark:bg-[#252528] border border-black/[0.06] dark:border-white/[0.06] rounded-lg p-3 flex flex-col justify-between gap-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-appleText dark:text-white flex items-center gap-1.5">
+                                🌊 Beyaz Gürültü
+                            </span>
+                            <button onclick="toggleSound('white')" id="toggle-white" class="w-10 h-5 rounded-full bg-[#E5E5EA] dark:bg-[#3A3A3C] p-0.5 relative transition-colors duration-200 cursor-pointer">
+                                <span id="knob-white" class="block w-4 h-4 rounded-full bg-white shadow-sm transform translate-x-0 transition-transform duration-200"></span>
+                            </button>
+                        </div>
+                        <input type="range" min="0" max="1" step="0.01" value="0.35" oninput="setChannelVolume('white', this.value)" class="w-full">
+                    </div>
+
+                    <!-- Kanal 3: Derin Ambiyans -->
+                    <div class="bg-[#F9F9FB] dark:bg-[#252528] border border-black/[0.06] dark:border-white/[0.06] rounded-lg p-3 flex flex-col justify-between gap-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-appleText dark:text-white flex items-center gap-1.5">
+                                🌙 Derin Ton
+                            </span>
+                            <button onclick="toggleSound('drone')" id="toggle-drone" class="w-10 h-5 rounded-full bg-[#E5E5EA] dark:bg-[#3A3A3C] p-0.5 relative transition-colors duration-200 cursor-pointer">
+                                <span id="knob-drone" class="block w-4 h-4 rounded-full bg-white shadow-sm transform translate-x-0 transition-transform duration-200"></span>
+                            </button>
+                        </div>
+                        <input type="range" min="0" max="1" step="0.01" value="0.45" oninput="setChannelVolume('drone', this.value)" class="w-full">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SAĞ KOLON: KOMPAKT ANIMSATICILAR & ODAK RADYOSU (5 Sütun) -->
+        <div class="lg:col-span-5 flex flex-col gap-4 sm:gap-5">
+            
+            <!-- KOMPAKT ANIMSATICILAR (GÖREV LİSTESİ) -->
+            <section id="mobile-view-tasks" class="bg-white dark:bg-[#1C1C1E] rounded-xl p-4 sm:p-5 apple-surface border border-black/[0.08] dark:border-white/[0.08] flex flex-col justify-between transition-colors">
+                <div>
+                    <!-- Başlık & Sayaç -->
+                    <div class="flex items-center justify-between mb-2.5">
+                        <div>
+                            <h2 class="font-semibold text-base text-appleText dark:text-white tracking-tight">Anımsatıcılar</h2>
+                            <p class="text-[11px] text-appleSecondary dark:text-[#98989D]">Günlük odak hedeflerin</p>
+                        </div>
+                        <span id="task-ratio" class="text-xs font-semibold text-appleBlue dark:text-appleDarkBlue bg-appleBlue/10 dark:bg-appleDarkBlue/15 px-2 py-0.5 rounded-md tabular-nums">
+                            0 / 0
+                        </span>
+                    </div>
+
+                    <!-- İlerleme Çubuğu -->
+                    <div class="w-full h-1 bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-full overflow-hidden mb-3.5">
+                        <div id="task-progress-bar" class="h-full bg-appleBlue dark:bg-appleDarkBlue rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+
+                    <!-- Görev Ekleme Formu -->
+                    <form onsubmit="addTask(event)" class="mb-3.5 bg-[#F9F9FB] dark:bg-[#252528] p-1.5 rounded-lg border border-black/[0.06] dark:border-white/[0.06] flex flex-wrap sm:flex-nowrap items-center gap-1.5">
+                        <input type="text" id="task-input" placeholder="Yeni görev ekle..." required
+                            class="w-full sm:flex-1 min-w-0 bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] focus:border-appleBlue dark:focus:border-appleDarkBlue rounded-md px-2.5 py-2 sm:py-1.5 text-xs sm:text-[13px] text-appleText dark:text-white placeholder-appleSecondary/70 outline-none transition">
+                        
+                        <div class="flex items-center gap-1.5 w-full sm:w-auto justify-end">
+                            <select id="task-priority" title="Öncelik Seviyesi" class="flex-1 sm:flex-none bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] rounded-md px-2.5 py-2 sm:py-1.5 text-[11px] font-medium text-appleText dark:text-white outline-none focus:border-appleBlue dark:focus:border-appleDarkBlue cursor-pointer shrink-0">
+                                <option value="low">Düşük</option>
+                                <option value="medium" selected>Orta</option>
+                                <option value="critical">Yüksek</option>
+                            </select>
+
+                            <button type="submit" class="px-4 sm:px-3 py-2 sm:py-1.5 rounded-md bg-appleBlue dark:bg-appleDarkBlue hover:bg-[#0066D6] text-white font-semibold text-xs transition cursor-pointer shrink-0">
+                                Ekle
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Kompakt Görev Listesi -->
+                    <div id="task-list" class="space-y-1.5 max-h-[320px] lg:max-h-[205px] overflow-y-auto pr-1">
+                        <!-- Görevler JS tarafından eklenecek -->
+                    </div>
+                </div>
+
+                <!-- Alt Bilgi -->
+                <div class="mt-3.5 pt-3 border-t border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between text-[11px] text-appleSecondary dark:text-[#98989D]">
+                    <span>Odaklanmak için görevi sabitle</span>
+                    <button onclick="clearCompletedTasks()" class="text-appleBlue dark:text-appleDarkBlue hover:underline font-medium cursor-pointer">
+                        Tamamlananları Temizle
+                    </button>
+                </div>
+            </section>
+
+            <!-- KESİNTİSİZ ODAK RADYOSU -->
+            <section id="mobile-view-radio" class="bg-white dark:bg-[#1C1C1E] rounded-xl p-4 sm:p-5 apple-surface border border-black/[0.08] dark:border-white/[0.08] transition-colors">
+                <div class="flex items-center justify-between gap-2 mb-3.5">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-appleBlue/10 dark:bg-appleDarkBlue/15 flex items-center justify-center text-appleBlue dark:text-appleDarkBlue shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="font-semibold text-[15px] text-appleText dark:text-white leading-tight">Odak Radyosu</h2>
+                            <p class="text-[11px] text-appleSecondary dark:text-[#98989D]">Kesintisiz & sınırsız Lo-Fi akorları</p>
+                        </div>
+                    </div>
+
+                    <div id="lofi-live-badge" class="hidden items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-appleGreen/15 text-appleGreen">
+                        <span class="w-1.5 h-1.5 rounded-full bg-appleGreen animate-pulse"></span>
+                        <span>Çalıyor</span>
+                    </div>
+                </div>
+
+                <!-- Kanal Seçici -->
+                <div class="bg-[#EEEEF0] dark:bg-[#2C2C2E] p-0.5 rounded-lg flex items-center gap-0.5 mb-3 text-xs border border-black/[0.04] dark:border-white/[0.04]">
+                    <button type="button" onclick="selectRadioStation('lofi')" id="station-lofi"
+                        class="radio-station-btn flex-1 py-1 px-2 rounded-md font-semibold bg-white dark:bg-[#3A3A3C] text-appleText dark:text-white apple-shadow-sm transition cursor-pointer">
+                        🎹 Lo-Fi
+                    </button>
+                    <button type="button" onclick="selectRadioStation('piano')" id="station-piano"
+                        class="radio-station-btn flex-1 py-1 px-2 rounded-md font-medium text-appleSecondary dark:text-[#98989D] hover:text-appleText dark:hover:text-white transition cursor-pointer">
+                        🎼 Piyano
+                    </button>
+                    <button type="button" onclick="selectRadioStation('ambient')" id="station-ambient"
+                        class="radio-station-btn flex-1 py-1 px-2 rounded-md font-medium text-appleSecondary dark:text-[#98989D] hover:text-appleText dark:hover:text-white transition cursor-pointer">
+                        🌌 Uzay Pad
+                    </button>
+                </div>
+
+                <!-- Oynatıcı Kontrol Kutusu -->
+                <div class="flex items-center justify-between gap-3 bg-[#F9F9FB] dark:bg-[#252528] border border-black/[0.06] dark:border-white/[0.06] px-3 py-2.5 rounded-lg">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <button type="button" onclick="toggleLofiRadio()" id="lofi-play-btn"
+                            class="w-8 h-8 rounded-lg bg-appleBlue dark:bg-appleDarkBlue hover:bg-[#0066D6] text-white flex items-center justify-center transition cursor-pointer shrink-0"
+                            title="Odak Radyosunu Başlat / Durdur">
+                            <svg id="lofi-icon-play" class="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+                            <svg id="lofi-icon-pause" class="w-3.5 h-3.5 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M5.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75A.75.75 0 007.25 3h-1.5zM12.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75a.75.75 0 00-.75-.75h-1.5z"/></svg>
+                        </button>
+                        <div class="min-w-0">
+                            <p id="lofi-station-title" class="text-xs sm:text-[13px] font-semibold text-appleText dark:text-white truncate">Lo-Fi Rhodes & Piyano</p>
+                            <p id="lofi-status-text" class="text-[11px] text-appleSecondary dark:text-[#98989D] truncate">Başlatmak için oynat düğmesine bas</p>
+                        </div>
+                    </div>
+                    <input type="range" min="0" max="1" step="0.01" value="0.55" oninput="setLofiVolume(this.value)" title="Radyo Ses Seviyesi" class="w-20 sm:w-24 shrink-0">
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- MOBİL ALT TAB BAR -->
+    <nav id="mobile-tab-bar" class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/90 dark:bg-[#1C1C1E]/92 backdrop-blur-xl border-t border-black/[0.08] dark:border-white/[0.08] pb-safe transition-colors">
+        <div class="max-w-md mx-auto grid grid-cols-3 h-14">
+            <button type="button" onclick="switchMobileTab('timer')" id="mob-nav-timer"
+                class="flex flex-col items-center justify-center gap-0.5 text-appleBlue dark:text-appleDarkBlue transition cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2" />
+                </svg>
+                <span class="text-[10px] font-semibold">Odak</span>
+            </button>
+
+            <button type="button" onclick="switchMobileTab('tasks')" id="mob-nav-tasks"
+                class="relative flex flex-col items-center justify-center gap-0.5 text-appleSecondary dark:text-[#98989D] transition cursor-pointer">
+                <div class="relative">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    <span id="mob-task-badge" class="hidden absolute -top-1 -right-2 min-w-[15px] h-[15px] px-1 rounded-full bg-appleBlue dark:bg-appleDarkBlue text-white text-[9px] font-bold flex items-center justify-center tabular-nums">0</span>
+                </div>
+                <span class="text-[10px] font-medium">Görevler</span>
+            </button>
+
+            <button type="button" onclick="switchMobileTab('audio')" id="mob-nav-audio"
+                class="relative flex flex-col items-center justify-center gap-0.5 text-appleSecondary dark:text-[#98989D] transition cursor-pointer">
+                <div class="relative">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                    </svg>
+                    <span id="mob-audio-dot" class="hidden absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-appleGreen"></span>
+                </div>
+                <span class="text-[10px] font-medium">Ses & Radyo</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- BİLDİRİM BARI -->
+    <div id="toast-box" class="fixed bottom-18 lg:bottom-5 left-1/2 -translate-x-1/2 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none w-max max-w-[90vw]">
+        <div class="bg-[#1D1D1F]/92 dark:bg-[#2C2C2E]/95 border border-white/10 backdrop-blur-xl text-white px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 text-xs font-medium">
+            <span class="w-1.5 h-1.5 rounded-full bg-appleGreen shrink-0"></span>
+            <span id="toast-message" class="truncate">Bildirim</span>
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================================================
+           0. EKRAN BOYUTU & MOBİL ADAPTASYON MOTORU
+           ========================================================================== */
+        let activeMobileTab = 'timer';
+
+        function isMobileViewport() {
+            return window.innerWidth < 1024;
+        }
+
+        function applyResponsiveLayout() {
+            const timerCard = document.getElementById('mobile-view-timer');
+            const tasksCard = document.getElementById('mobile-view-tasks');
+            const radioCard = document.getElementById('mobile-view-radio');
+            const ambientCard = document.getElementById('mobile-view-ambient');
+
+            if (!timerCard || !tasksCard || !radioCard || !ambientCard) return;
+
+            if (!isMobileViewport()) {
+                timerCard.classList.remove('hidden');
+                tasksCard.classList.remove('hidden');
+                radioCard.classList.remove('hidden');
+                ambientCard.classList.remove('hidden');
+            } else {
+                timerCard.classList.toggle('hidden', activeMobileTab !== 'timer');
+                tasksCard.classList.toggle('hidden', activeMobileTab !== 'tasks');
+                radioCard.classList.toggle('hidden', activeMobileTab !== 'audio');
+                ambientCard.classList.toggle('hidden', activeMobileTab !== 'audio');
+            }
+
+            updateMobileNavUI();
+            if (typeof updateTimerUI === 'function') updateTimerUI();
+        }
+
+        function switchMobileTab(tab) {
+            activeMobileTab = tab;
+            applyResponsiveLayout();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateMobileNavUI() {
+            const tabs = ['timer', 'tasks', 'audio'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`mob-nav-${t}`);
+                if (!btn) return;
+                const label = btn.querySelector('span:last-child');
+                if (t === activeMobileTab) {
+                    btn.className = 'relative flex flex-col items-center justify-center gap-0.5 text-appleBlue dark:text-appleDarkBlue transition cursor-pointer';
+                    if (label) label.className = 'text-[10px] font-semibold';
+                } else {
+                    btn.className = 'relative flex flex-col items-center justify-center gap-0.5 text-appleSecondary dark:text-[#98989D] transition cursor-pointer';
+                    if (label) label.className = 'text-[10px] font-medium';
+                }
+            });
+
+            const pendingCount = Array.isArray(tasks) ? tasks.filter(t => !t.completed).length : 0;
+            const badgeEl = document.getElementById('mob-task-badge');
+            if (badgeEl) {
+                if (pendingCount > 0) {
+                    badgeEl.textContent = pendingCount;
+                    badgeEl.classList.remove('hidden');
+                } else {
+                    badgeEl.classList.add('hidden');
+                }
+            }
+
+            const anyAudio = (typeof lofiActive !== 'undefined' && lofiActive) ||
+                (typeof channels !== 'undefined' && !isMuted && Object.values(channels).some(c => c.active));
+            const dotEl = document.getElementById('mob-audio-dot');
+            if (dotEl) {
+                dotEl.classList.toggle('hidden', !anyAudio);
+            }
+        }
+
+        window.addEventListener('resize', applyResponsiveLayout);
+
+        /* ==========================================================================
+           0.1 AÇIK / KARANLIK MOD YÖNETİMİ
+           ========================================================================== */
+        let isDarkMode = localStorage.getItem('neurofocus_theme') === 'dark';
+
+        function applyThemeUI() {
+            const htmlEl = document.documentElement;
+            const thumbEl = document.getElementById('theme-switch-thumb');
+            const sunEl = document.getElementById('theme-sun-icon');
+            const moonEl = document.getElementById('theme-moon-icon');
+            const trackEl = document.getElementById('progress-track');
+
+            if (isDarkMode) {
+                htmlEl.classList.add('dark');
+                if (thumbEl) thumbEl.style.transform = 'translateX(26px)';
+                if (sunEl) sunEl.style.opacity = '0.45';
+                if (moonEl) moonEl.style.opacity = '1';
+                if (trackEl) trackEl.setAttribute('stroke', '#2C2C2E');
+            } else {
+                htmlEl.classList.remove('dark');
+                if (thumbEl) thumbEl.style.transform = 'translateX(0px)';
+                if (sunEl) sunEl.style.opacity = '1';
+                if (moonEl) moonEl.style.opacity = '0.45';
+                if (trackEl) trackEl.setAttribute('stroke', '#E5E5EA');
+            }
+
+            if (typeof renderTasks === 'function') renderTasks();
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('neurofocus_theme', isDarkMode ? 'dark' : 'light');
+            applyThemeUI();
+        }
+
+        /* ==========================================================================
+           1. DURUM YÖNETİMİ (STATE) & BAŞLANGIÇ VERİLERİ
+           ========================================================================== */
+        const savedDurations = JSON.parse(localStorage.getItem('neurofocus_durations')) || {
+            focus: 25,
+            short: 5
+        };
+
+        const MODES = {
+            focus: { label: 'Odak Oturumu', minutes: savedDurations.focus, color: '#007AFF' },
+            short: { label: 'Mola',         minutes: savedDurations.short, color: '#34C759' }
+        };
+
+        let currentMode = 'focus';
+        let totalSeconds = MODES.focus.minutes * 60;
+        let remainingSeconds = totalSeconds;
+        let timerInterval = null;
+        let isRunning = false;
+        let recommendedBreak = 5;
+
+        let stats = JSON.parse(localStorage.getItem('neurofocus_stats')) || {
+            sessions: 0,
+            totalMinutes: 0
+        };
+
+        let tasks = JSON.parse(localStorage.getItem('neurofocus_tasks')) || [];
+        let customPresets = JSON.parse(localStorage.getItem('neurofocus_custom_presets')) || [];
+        let activePresetId = null;
+
+        const CIRCUMFERENCE = 2 * Math.PI * 112;
+
+        /* ==========================================================================
+           2. CANLI SAAT & TOAST BİLDİRİMİ
+           ========================================================================== */
+        function updateLiveClock() {
+            const now = new Date();
+            const clockEl = document.getElementById('live-clock');
+            if (clockEl) {
+                clockEl.textContent = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            }
+        }
+        setInterval(updateLiveClock, 1000);
+        updateLiveClock();
+
+        let toastTimeout = null;
+        function showToast(msg) {
+            const box = document.getElementById('toast-box');
+            const text = document.getElementById('toast-message');
+            text.textContent = msg;
+            box.classList.remove('translate-y-24', 'opacity-0');
+            
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                box.classList.add('translate-y-24', 'opacity-0');
+            }, 3200);
+        }
+
+        /* ==========================================================================
+           3. SAYAÇ & OTOMATİK MOLA HESAPLAMA MANTIĞI
+           ========================================================================== */
+        function formatDurationLabel(mins) {
+            if (mins > 60) {
+                const h = Math.floor(mins / 60);
+                const m = mins % 60;
+                return m > 0 ? `${h} sa ${m} dk` : `${h} sa`;
+            }
+            return `${mins} dk`;
+        }
+
+        function formatTime(sec) {
+            if (sec > 3600) {
+                const h = Math.floor(sec / 3600);
+                const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
+                const s = (sec % 60).toString().padStart(2, '0');
+                return `${h}:${m}:${s}`;
+            }
+            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function updateTimerUI() {
+            const display = document.getElementById('timer-display');
+            const ring = document.getElementById('progress-ring');
+            const formatted = formatTime(remainingSeconds);
+            const mobile = isMobileViewport();
+            
+            display.textContent = formatted;
+            if (remainingSeconds > 3600) {
+                display.style.fontSize = mobile ? '36px' : '44px';
+            } else {
+                display.style.fontSize = mobile ? '44px' : '52px';
+            }
+            document.title = `${formatted} — onkfocus`;
+
+            const ratio = totalSeconds > 0 ? remainingSeconds / totalSeconds : 0;
+            const offset = CIRCUMFERENCE * (1 - ratio);
+            ring.style.strokeDashoffset = offset;
+            ring.style.stroke = MODES[currentMode].color;
+        }
+
+        function switchMode(mode) {
+            pauseTimer();
+            currentMode = mode;
+            totalSeconds = MODES[mode].minutes * 60;
+            remainingSeconds = totalSeconds;
+
+            document.querySelectorAll('.mode-tab').forEach(btn => {
+                btn.className = 'mode-tab flex-1 py-1.5 px-3 rounded-md text-xs font-medium text-appleSecondary dark:text-[#98989D] hover:text-appleText dark:hover:text-white transition-all cursor-pointer';
+            });
+
+            const activeTab = document.getElementById(`tab-${mode}`);
+            activeTab.className = 'mode-tab flex-1 py-1.5 px-3 rounded-md text-xs font-semibold bg-white dark:bg-[#3A3A3C] text-appleText dark:text-white apple-shadow-sm transition-all cursor-pointer';
+
+            const badge = document.getElementById('mode-badge');
+            badge.textContent = MODES[mode].label;
+            badge.style.color = MODES[mode].color;
+
+            updateTimerUI();
+        }
+
+        function saveDurations() {
+            localStorage.setItem('neurofocus_durations', JSON.stringify({
+                focus: MODES.focus.minutes,
+                short: MODES.short.minutes
+            }));
+        }
+
+        function syncDurationLabels() {
+            const tabFocus = document.getElementById('tab-focus-val');
+            const tabShort = document.getElementById('tab-short-val');
+
+            if (tabFocus) tabFocus.textContent = MODES.focus.minutes;
+            if (tabShort) tabShort.textContent = MODES.short.minutes;
+
+            const inFocus = document.getElementById('input-focus');
+            const inShort = document.getElementById('input-short');
+
+            if (inFocus) inFocus.value = MODES.focus.minutes;
+            if (inShort) inShort.value = MODES.short.minutes;
+        }
+
+        function onFocusInputChange(val) {
+            const parsed = parseInt(val, 10);
+            if (isNaN(parsed) || parsed < 1) return;
+            const clampedFocus = Math.min(600, parsed);
+
+            recommendedBreak = Math.min(45, Math.max(3, Math.round(clampedFocus * 0.2)));
+
+            MODES.focus.minutes = clampedFocus;
+            MODES.short.minutes = recommendedBreak;
+
+            activePresetId = null;
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.className = 'preset-btn px-2.5 py-1 rounded-md text-xs font-medium bg-[#EEEEF0] dark:bg-[#2C2C2E] hover:bg-appleBlue/10 dark:hover:bg-appleDarkBlue/15 text-appleText dark:text-white hover:text-appleBlue dark:hover:text-appleDarkBlue border border-black/[0.05] dark:border-white/[0.06] transition cursor-pointer';
+            });
+            renderCustomPresets();
+
+            syncDurationLabels();
+            saveDurations();
+
+            if (!isRunning) {
+                totalSeconds = MODES[currentMode].minutes * 60;
+                remainingSeconds = totalSeconds;
+                updateTimerUI();
+            }
+        }
+
+        function onBreakInputChange(val) {
+            const parsed = parseInt(val, 10);
+            if (isNaN(parsed) || parsed < 1) return;
+            MODES.short.minutes = Math.min(90, parsed);
+
+            syncDurationLabels();
+            saveDurations();
+
+            if (!isRunning && currentMode === 'short') {
+                totalSeconds = MODES.short.minutes * 60;
+                remainingSeconds = totalSeconds;
+                updateTimerUI();
+            }
+        }
+
+        function applyPreset(presetKey, focusMins, breakMins, customLabel) {
+            pauseTimer();
+            activePresetId = presetKey;
+            MODES.focus.minutes = focusMins;
+            MODES.short.minutes = breakMins;
+
+            syncDurationLabels();
+            saveDurations();
+
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.className = 'preset-btn px-2.5 py-1 rounded-md text-xs font-medium bg-[#EEEEF0] dark:bg-[#2C2C2E] hover:bg-appleBlue/10 dark:hover:bg-appleDarkBlue/15 text-appleText dark:text-white hover:text-appleBlue dark:hover:text-appleDarkBlue border border-black/[0.05] dark:border-white/[0.06] transition cursor-pointer';
+            });
+            const activePreset = document.getElementById(`preset-${presetKey}`);
+            if (activePreset) {
+                activePreset.className = 'preset-btn px-2.5 py-1 rounded-md text-xs font-semibold bg-appleBlue dark:bg-appleDarkBlue text-white border border-transparent transition cursor-pointer';
+            }
+
+            renderCustomPresets();
+            switchMode('focus');
+            const presetNames = {
+                tyt: `TYT Deneme (${formatDurationLabel(focusMins)})`,
+                ayt: `AYT Deneme (${formatDurationLabel(focusMins)})`,
+                hour: '1 Saat Etüt (60 dk)'
+            };
+            const label = customLabel || presetNames[presetKey] || `${formatDurationLabel(focusMins)} Modu`;
+            showToast(`${label} hazırlandı`);
+        }
+
+        function toggleCustomPresetForm() {
+            const form = document.getElementById('custom-preset-form');
+            const nameInput = document.getElementById('custom-preset-name');
+            const focusInput = document.getElementById('custom-preset-focus');
+            if (!form) return;
+
+            const willOpen = form.classList.contains('hidden');
+            form.classList.toggle('hidden');
+            if (willOpen) {
+                focusInput.value = MODES.focus.minutes;
+                nameInput.focus();
+            }
+        }
+
+        function saveCustomPreset(e) {
+            e.preventDefault();
+            const nameEl = document.getElementById('custom-preset-name');
+            const focusEl = document.getElementById('custom-preset-focus');
+            const shortEl = document.getElementById('custom-preset-short');
+
+            const name = nameEl.value.trim();
+            const focusMins = Math.min(600, Math.max(1, parseInt(focusEl.value, 10) || 25));
+            const rawShort = parseInt(shortEl.value, 10);
+            const breakMins = !isNaN(rawShort) && rawShort >= 1
+                ? Math.min(90, rawShort)
+                : Math.min(45, Math.max(3, Math.round(focusMins * 0.2)));
+
+            if (!name) return;
+
+            const newPreset = {
+                id: 'custom_' + Date.now(),
+                name,
+                focus: focusMins,
+                short: breakMins
+            };
+
+            customPresets.push(newPreset);
+            localStorage.setItem('neurofocus_custom_presets', JSON.stringify(customPresets));
+
+            nameEl.value = '';
+            shortEl.value = '';
+            document.getElementById('custom-preset-form').classList.add('hidden');
+
+            renderCustomPresets();
+            applyPreset(newPreset.id, newPreset.focus, newPreset.short, newPreset.name);
+        }
+
+        function deleteCustomPreset(e, id) {
+            e.stopPropagation();
+            customPresets = customPresets.filter(p => p.id !== id);
+            localStorage.setItem('neurofocus_custom_presets', JSON.stringify(customPresets));
+            if (activePresetId === id) activePresetId = null;
+            renderCustomPresets();
+            showToast('Özel mod silindi');
+        }
+
+        function renderCustomPresets() {
+            const container = document.getElementById('custom-presets-container');
+            if (!container) return;
+
+            container.innerHTML = customPresets.map(p => {
+                const isActive = activePresetId === p.id;
+                const btnStyle = isActive
+                    ? 'bg-appleBlue dark:bg-appleDarkBlue text-white font-semibold border-transparent'
+                    : 'bg-[#EEEEF0] dark:bg-[#2C2C2E] hover:bg-appleBlue/10 dark:hover:bg-appleDarkBlue/15 text-appleText dark:text-white hover:text-appleBlue dark:hover:text-appleDarkBlue font-medium border-black/[0.05] dark:border-white/[0.06]';
+
+                return `
+                    <div id="preset-${p.id}" onclick="applyPreset('${p.id}', ${p.focus}, ${p.short}, '${escapeHTML(p.name)}')"
+                        class="preset-btn group inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-md text-xs border transition cursor-pointer ${btnStyle}">
+                        <span>${escapeHTML(p.name)} · ${formatDurationLabel(p.focus)}</span>
+                        <button type="button" onclick="deleteCustomPreset(event, '${p.id}')" title="Modu Sil"
+                            class="w-4 h-4 rounded flex items-center justify-center text-[11px] opacity-60 hover:opacity-100 hover:bg-black/10 dark:hover:bg-white/15 transition cursor-pointer">
+                            ×
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function startTimer() {
+            if (isRunning) return;
+            initAudioContext();
+            isRunning = true;
+
+            document.getElementById('btn-start').classList.add('hidden');
+            document.getElementById('btn-pause').classList.remove('hidden');
+
+            timerInterval = setInterval(() => {
+                if (remainingSeconds > 0) {
+                    remainingSeconds--;
+                    updateTimerUI();
+                } else {
+                    handleTimerComplete();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('btn-pause').classList.add('hidden');
+            document.getElementById('btn-start').classList.remove('hidden');
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            totalSeconds = MODES[currentMode].minutes * 60;
+            remainingSeconds = totalSeconds;
+            updateTimerUI();
+        }
+
+        function handleTimerComplete() {
+            pauseTimer();
+            playCompletionChime();
+
+            if (currentMode === 'focus') {
+                const completedMins = Math.round(totalSeconds / 60);
+                stats.sessions += 1;
+                stats.totalMinutes += completedMins;
+                localStorage.setItem('neurofocus_stats', JSON.stringify(stats));
+                renderStats();
+
+                switchMode('short');
+                startTimer();
+                showToast(`Odak oturumu tamamlandı! Mola (${MODES.short.minutes} dk) otomatik başladı`);
+            } else {
+                switchMode('focus');
+                showToast('Mola tamamlandı! Yeni odak oturumuna hazırsın');
+            }
+        }
+
+        function renderStats() {
+            document.getElementById('session-count').textContent = stats.sessions;
+            const totalEl = document.getElementById('total-minutes-display');
+            if (totalEl) {
+                totalEl.textContent = formatDurationLabel(stats.totalMinutes);
+            }
+        }
+
+        /* ==========================================================================
+           4. GÖREV YÖNETİMİ (ANIMSATICILAR)
+           ========================================================================== */
+        function saveTasks() {
+            localStorage.setItem('neurofocus_tasks', JSON.stringify(tasks));
+        }
+
+        function addTask(e) {
+            e.preventDefault();
+            const input = document.getElementById('task-input');
+            const priority = document.getElementById('task-priority').value;
+            const text = input.value.trim();
+            if (!text) return;
+
+            const newTask = {
+                id: Date.now(),
+                text,
+                priority,
+                completed: false,
+                pinned: tasks.length === 0
+            };
+
+            tasks.unshift(newTask);
+            input.value = '';
+            saveTasks();
+            renderTasks();
+        }
+
+        function toggleTask(id) {
+            tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+            saveTasks();
+            renderTasks();
+        }
+
+        function pinTask(id) {
+            tasks = tasks.map(t => ({
+                ...t,
+                pinned: t.id === id ? !t.pinned : false
+            }));
+            saveTasks();
+            renderTasks();
+        }
+
+        function clearPinnedTask() {
+            tasks = tasks.map(t => ({ ...t, pinned: false }));
+            saveTasks();
+            renderTasks();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            saveTasks();
+            renderTasks();
+        }
+
+        function clearCompletedTasks() {
+            const beforeCount = tasks.length;
+            tasks = tasks.filter(t => !t.completed);
+            if (tasks.length !== beforeCount) {
+                saveTasks();
+                renderTasks();
+                showToast('Tamamlanan görevler temizlendi');
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag]));
+        }
+
+        function renderTasks() {
+            const listEl = document.getElementById('task-list');
+            const pinnedTextEl = document.getElementById('pinned-task-text');
+            const unpinBtn = document.getElementById('unpin-btn');
+
+            const pinnedTask = tasks.find(t => t.pinned);
+            if (pinnedTask) {
+                pinnedTextEl.textContent = pinnedTask.text;
+                pinnedTextEl.className = `text-xs sm:text-sm font-medium truncate ${pinnedTask.completed ? 'line-through text-appleSecondary dark:text-[#98989D]' : 'text-appleText dark:text-white'}`;
+                unpinBtn.classList.remove('hidden');
+            } else {
+                pinnedTextEl.textContent = 'Odaklanılacak görev seçilmedi';
+                pinnedTextEl.className = 'text-xs sm:text-sm text-appleSecondary dark:text-[#98989D] truncate';
+                unpinBtn.classList.add('hidden');
+            }
+
+            const completedCount = tasks.filter(t => t.completed).length;
+            document.getElementById('task-ratio').textContent = `${completedCount} / ${tasks.length}`;
+            const percent = tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0;
+            document.getElementById('task-progress-bar').style.width = `${percent}%`;
+            updateMobileNavUI();
+
+            if (tasks.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-6 px-4 bg-[#F9F9FB] dark:bg-[#252528] rounded-lg border border-black/[0.05] dark:border-white/[0.05] space-y-1">
+                        <p class="text-xs font-semibold text-appleText dark:text-white">Henüz Görev Yok</p>
+                        <p class="text-[11px] text-appleSecondary dark:text-[#98989D]">Odaklanmak istediğin görevleri yukarıdan ekleyebilirsin.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const priorityBadge = {
+                low:      { label: 'Düşük',  cls: 'text-appleGreen bg-appleGreen/10 dark:bg-appleGreen/15' },
+                medium:   { label: 'Orta',   cls: 'text-appleOrange bg-appleOrange/10 dark:bg-appleOrange/15' },
+                critical: { label: 'Yüksek', cls: 'text-appleRed bg-appleRed/10 dark:bg-appleRed/15' }
+            };
+
+            listEl.innerHTML = tasks.map(task => {
+                const badge = priorityBadge[task.priority] || priorityBadge.medium;
+                const rowStyle = task.pinned
+                    ? 'bg-appleBlue/[0.04] dark:bg-appleDarkBlue/15 border-appleBlue/30 dark:border-appleDarkBlue/40'
+                    : 'bg-[#F9F9FB] dark:bg-[#252528] border-black/[0.05] dark:border-white/[0.05] hover:bg-[#F2F2F7] dark:hover:bg-[#323236]';
+
+                return `
+                    <div class="group flex items-center justify-between gap-2.5 px-3 py-2 rounded-lg border ${rowStyle} transition-all">
+                        <div class="flex items-center gap-2.5 overflow-hidden">
+                            <button onclick="toggleTask(${task.id})" class="w-4 h-4 rounded-full border-[1.5px] ${task.completed ? 'bg-appleBlue dark:bg-appleDarkBlue border-appleBlue dark:border-appleDarkBlue text-white' : 'border-[#C7C7CC] dark:border-[#636366] hover:border-appleBlue dark:hover:border-appleDarkBlue bg-white dark:bg-transparent'} flex items-center justify-center shrink-0 transition cursor-pointer">
+                                ${task.completed ? '<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}
+                            </button>
+                            <div class="flex items-center gap-2 overflow-hidden">
+                                <p class="text-xs sm:text-[13px] font-medium truncate ${task.completed ? 'line-through text-appleSecondary dark:text-[#98989D]' : 'text-appleText dark:text-white'}">
+                                    ${escapeHTML(task.text)}
+                                </p>
+                                <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 ${badge.cls}">
+                                    ${badge.label}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="pinTask(${task.id})" title="Odak Görevi Yap"
+                                class="px-2 py-0.5 rounded-md text-[11px] font-medium transition cursor-pointer ${task.pinned ? 'text-appleBlue dark:text-appleDarkBlue bg-appleBlue/10 dark:bg-appleDarkBlue/15' : 'text-appleSecondary dark:text-[#98989D] hover:text-appleText dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10'}">
+                                ${task.pinned ? 'Sabit' : 'Sabitle'}
+                            </button>
+                            <button onclick="deleteTask(${task.id})" title="Sil"
+                                class="p-1 rounded-md text-appleSecondary dark:text-[#98989D] hover:text-appleRed hover:bg-black/5 dark:hover:bg-white/10 text-[11px] transition cursor-pointer">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /* ==========================================================================
+           5. WEB AUDIO API ARKA PLAN SESLERİ
+           ========================================================================== */
+        let audioCtx = null;
+        let masterGain = null;
+        let isMuted = false;
+
+        const channels = {
+            rain:  { active: false, volume: 0.50, node: null, gain: null },
+            white: { active: false, volume: 0.35, node: null, gain: null },
+            drone: { active: false, volume: 0.45, node: null, gain: null }
+        };
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContextClass();
+                masterGain = audioCtx.createGain();
+                masterGain.gain.value = isMuted ? 0 : 1;
+                masterGain.connect(audioCtx.destination);
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function createNoiseBuffer() {
+            const bufferSize = audioCtx.sampleRate * 2;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            return buffer;
+        }
+
+        function startChannelSound(type) {
+            initAudioContext();
+            const ch = channels[type];
+            if (ch.node) return;
+
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.value = ch.volume * 0.35;
+            gainNode.connect(masterGain);
+            ch.gain = gainNode;
+
+            if (type === 'white') {
+                const source = audioCtx.createBufferSource();
+                source.buffer = createNoiseBuffer();
+                source.loop = true;
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 1800;
+
+                source.connect(filter);
+                filter.connect(gainNode);
+                source.start();
+                ch.node = source;
+            } else if (type === 'rain') {
+                const source = audioCtx.createBufferSource();
+                source.buffer = createNoiseBuffer();
+                source.loop = true;
+
+                const bandpass = audioCtx.createBiquadFilter();
+                bandpass.type = 'bandpass';
+                bandpass.frequency.value = 650;
+                bandpass.Q.value = 0.7;
+
+                source.connect(bandpass);
+                bandpass.connect(gainNode);
+                source.start();
+                ch.node = source;
+            } else if (type === 'drone') {
+                const osc1 = audioCtx.createOscillator();
+                const osc2 = audioCtx.createOscillator();
+                const filter = audioCtx.createBiquadFilter();
+
+                osc1.type = 'sine';
+                osc1.frequency.value = 110;
+                osc2.type = 'triangle';
+                osc2.frequency.value = 164.81;
+
+                filter.type = 'lowpass';
+                filter.frequency.value = 260;
+
+                osc1.connect(filter);
+                osc2.connect(filter);
+                filter.connect(gainNode);
+
+                osc1.start();
+                osc2.start();
+                ch.node = { stop: () => { osc1.stop(); osc2.stop(); } };
+            }
+        }
+
+        function stopChannelSound(type) {
+            const ch = channels[type];
+            if (ch.node) {
+                try { ch.node.stop(); } catch (e) {}
+                ch.node = null;
+            }
+        }
+
+        function toggleSound(type) {
+            const ch = channels[type];
+            ch.active = !ch.active;
+
+            const btn = document.getElementById(`toggle-${type}`);
+            const knob = document.getElementById(`knob-${type}`);
+
+            if (ch.active) {
+                startChannelSound(type);
+                btn.classList.remove('bg-[#E5E5EA]', 'dark:bg-[#3A3A3C]');
+                btn.classList.add('bg-appleGreen');
+                knob.classList.remove('translate-x-0');
+                knob.classList.add('translate-x-5');
+            } else {
+                stopChannelSound(type);
+                btn.classList.remove('bg-appleGreen');
+                btn.classList.add('bg-[#E5E5EA]', 'dark:bg-[#3A3A3C]');
+                knob.classList.remove('translate-x-5');
+                knob.classList.add('translate-x-0');
+            }
+
+            updateVisualizer();
+        }
+
+        function setChannelVolume(type, val) {
+            const ch = channels[type];
+            ch.volume = parseFloat(val);
+            if (ch.gain) {
+                ch.gain.gain.value = ch.volume * 0.35;
+            }
+        }
+
+        function toggleMasterMute() {
+            initAudioContext();
+            isMuted = !isMuted;
+            if (masterGain) {
+                masterGain.gain.value = isMuted ? 0 : 1;
+            }
+            document.getElementById('mute-icon').textContent = isMuted ? '🔇' : '🔊';
+            document.getElementById('mute-text').textContent = isMuted ? 'Sessiz' : 'Açık';
+            updateVisualizer();
+        }
+
+        function updateVisualizer() {
+            const anyActive = !isMuted && Object.values(channels).some(c => c.active);
+            const bars = document.querySelectorAll('#visualizer span');
+            bars.forEach((bar, idx) => {
+                if (anyActive) {
+                    bar.classList.add('eq-bar-active');
+                    bar.style.animationDelay = `${idx * 0.14}s`;
+                } else {
+                    bar.classList.remove('eq-bar-active');
+                }
+            });
+            updateMobileNavUI();
+        }
+
+        function playCompletionChime() {
+            initAudioContext();
+            if (isMuted) return;
+            const notes = [587.33, 880.00, 1174.66];
+            notes.forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+
+                const startTime = audioCtx.currentTime + idx * 0.14;
+                gain.gain.setValueAtTime(0.16, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.6);
+
+                osc.connect(gain);
+                gain.connect(masterGain);
+                osc.start(startTime);
+                osc.stop(startTime + 0.62);
+            });
+        }
+
+        /* ==========================================================================
+           6. KESİNTİSİZ ODAK RADYOSU (ÇOK KANALLI MÜZİK MOTORU)
+           ========================================================================== */
+        let lofiActive = false;
+        let lofiTimer = null;
+        let lofiStep = 0;
+        let lofiVolume = 0.55;
+        let currentStation = 'lofi';
+
+        const RADIO_STATIONS = {
+            lofi: {
+                title: 'Lo-Fi Rhodes & Piyano',
+                interval: 3800,
+                chords: [
+                    { name: 'Fmaj7 · Sıcak Akor', notes: [174.61, 220.00, 261.63, 329.63] },
+                    { name: 'Em7 · Derin Akış',   notes: [164.81, 196.00, 246.94, 293.66] },
+                    { name: 'Dm7 · Sakin Ritim',  notes: [146.83, 174.61, 220.00, 261.63] },
+                    { name: 'Cmaj7 · Gece Tonu',  notes: [130.81, 164.81, 196.00, 246.94] }
+                ]
+            },
+            piano: {
+                title: 'Klasik Piyano Arpej',
+                interval: 3200,
+                chords: [
+                    { name: 'Am · Sabah Işığı',   notes: [220.00, 261.63, 329.63, 440.00] },
+                    { name: 'F · Huzurlu Akış',   notes: [174.61, 220.00, 261.63, 349.23] },
+                    { name: 'C · Berrak Zihin',   notes: [130.81, 196.00, 261.63, 329.63] },
+                    { name: 'G · Yumuşak Geçiş',  notes: [196.00, 246.94, 293.66, 392.00] }
+                ]
+            },
+            ambient: {
+                title: 'Derin Uzay Pad',
+                interval: 5200,
+                chords: [
+                    { name: 'D2 · Yıldız Tozu',   notes: [73.42, 110.00, 146.83, 220.00] },
+                    { name: 'Bm · Kozmik Sessizlik', notes: [61.74, 123.47, 185.00, 246.94] },
+                    { name: 'G2 · Yörünge',       notes: [98.00, 146.83, 196.00, 293.66] },
+                    { name: 'A2 · Derin Odak',    notes: [110.00, 164.81, 220.00, 329.63] }
+                ]
+            }
+        };
+
+        function selectRadioStation(stationKey) {
+            if (!RADIO_STATIONS[stationKey]) return;
+            currentStation = stationKey;
+            lofiStep = 0;
+
+            document.querySelectorAll('.radio-station-btn').forEach(btn => {
+                btn.className = 'radio-station-btn flex-1 py-1 px-2 rounded-md font-medium text-appleSecondary dark:text-[#98989D] hover:text-appleText dark:hover:text-white transition cursor-pointer';
+            });
+            const activeBtn = document.getElementById(`station-${stationKey}`);
+            if (activeBtn) {
+                activeBtn.className = 'radio-station-btn flex-1 py-1 px-2 rounded-md font-semibold bg-white dark:bg-[#3A3A3C] text-appleText dark:text-white apple-shadow-sm transition cursor-pointer';
+            }
+
+            const titleEl = document.getElementById('lofi-station-title');
+            if (titleEl) titleEl.textContent = RADIO_STATIONS[stationKey].title;
+
+            if (lofiActive) {
+                clearInterval(lofiTimer);
+                triggerLofiChord();
+                lofiTimer = setInterval(triggerLofiChord, RADIO_STATIONS[stationKey].interval);
+            }
+        }
+
+        function triggerLofiChord() {
+            if (!lofiActive) return;
+            initAudioContext();
+
+            const station = RADIO_STATIONS[currentStation];
+            const chord = station.chords[lofiStep % station.chords.length];
+            const statusEl = document.getElementById('lofi-status-text');
+            if (statusEl) statusEl.textContent = chord.name;
+
+            const now = audioCtx.currentTime;
+            const durationSec = station.interval / 1000;
+
+            chord.notes.forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                const filter = audioCtx.createBiquadFilter();
+                const gain = audioCtx.createGain();
+
+                if (currentStation === 'piano') {
+                    const noteOffset = idx * 0.42;
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + noteOffset);
+
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(1200, now + noteOffset);
+                    filter.frequency.exponentialRampToValueAtTime(420, now + noteOffset + 2.4);
+
+                    const noteGain = (lofiVolume * 0.11);
+                    gain.gain.setValueAtTime(0.0001, now + noteOffset);
+                    gain.gain.linearRampToValueAtTime(noteGain, now + noteOffset + 0.04);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + noteOffset + 2.6);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(masterGain);
+
+                    osc.start(now + noteOffset);
+                    osc.stop(now + noteOffset + 2.7);
+                } else if (currentStation === 'ambient') {
+                    osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+                    osc.frequency.setValueAtTime(freq, now);
+                    osc.detune.setValueAtTime((idx - 1.5) * 5, now);
+
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(420, now);
+
+                    const noteGain = (lofiVolume * 0.065);
+                    gain.gain.setValueAtTime(0.0001, now);
+                    gain.gain.linearRampToValueAtTime(noteGain, now + 1.4);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSec + 0.6);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(masterGain);
+
+                    osc.start(now);
+                    osc.stop(now + durationSec + 0.7);
+                } else {
+                    osc.type = idx === 0 ? 'sine' : 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+                    osc.detune.setValueAtTime((Math.random() - 0.5) * 6, now);
+
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(680, now);
+                    filter.frequency.exponentialRampToValueAtTime(320, now + 3.4);
+
+                    const noteGain = (lofiVolume * 0.085) / (idx === 0 ? 0.85 : 1.15);
+                    gain.gain.setValueAtTime(0.0001, now + idx * 0.06);
+                    gain.gain.linearRampToValueAtTime(noteGain, now + idx * 0.06 + 0.35);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 3.7);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(masterGain);
+
+                    osc.start(now + idx * 0.06);
+                    osc.stop(now + 3.8);
+                }
+            });
+
+            lofiStep++;
+        }
+
+        function toggleLofiRadio() {
+            lofiActive = !lofiActive;
+            const playIcon = document.getElementById('lofi-icon-play');
+            const pauseIcon = document.getElementById('lofi-icon-pause');
+            const statusEl = document.getElementById('lofi-status-text');
+            const liveBadge = document.getElementById('lofi-live-badge');
+
+            if (lofiActive) {
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+                if (liveBadge) {
+                    liveBadge.classList.remove('hidden');
+                    liveBadge.classList.add('flex');
+                }
+                triggerLofiChord();
+                clearInterval(lofiTimer);
+                lofiTimer = setInterval(triggerLofiChord, RADIO_STATIONS[currentStation].interval);
+                showToast(`${RADIO_STATIONS[currentStation].title} başlatıldı`);
+            } else {
+                pauseIcon.classList.add('hidden');
+                playIcon.classList.remove('hidden');
+                if (liveBadge) {
+                    liveBadge.classList.add('hidden');
+                    liveBadge.classList.remove('flex');
+                }
+                clearInterval(lofiTimer);
+                if (statusEl) statusEl.textContent = 'Başlatmak için oynat düğmesine bas';
+            }
+            updateMobileNavUI();
+        }
+
+        function setLofiVolume(val) {
+            lofiVolume = parseFloat(val);
+        }
+
+        /* ==========================================================================
+           7. BAŞLATMA (INIT)
+           ========================================================================== */
+        window.addEventListener('DOMContentLoaded', () => {
+            applyThemeUI();
+            syncDurationLabels();
+            renderCustomPresets();
+            renderStats();
+            renderTasks();
+            applyResponsiveLayout();
+        });
+    </script>
+</body>
+</html>
